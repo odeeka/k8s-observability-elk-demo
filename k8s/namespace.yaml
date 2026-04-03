@@ -1,0 +1,16 @@
+---
+# Namespace for all observability stack components (Elasticsearch, Kibana, Fluent Bit)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability
+  labels:
+    app.kubernetes.io/part-of: elk-observability
+---
+# Namespace for application microservices
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apps
+  labels:
+    app.kubernetes.io/part-of: elk-observability
