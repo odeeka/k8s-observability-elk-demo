@@ -23,12 +23,12 @@ Two Node.js microservices produce structured JSON logs that are automatically co
 
 ## Architecture Overview
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────────────┐
 │                        KIND Cluster (single node)                    │
 │                                                                      │
 │   Namespace: apps                                                    │
-│   ┌─────────────────────┐    ┌─────────────────────────────────┐    │
+│   ┌──────────────────────┐    ┌─────────────────────────────────┐    │
 │   │    user-service      │    │        payment-service          │    │
 │   │  (2 replicas)        │    │       (2 replicas, 30% fail)    │    │
 │   │  GET /users          │    │  GET  /payments                 │    │
@@ -39,26 +39,26 @@ Two Node.js microservices produce structured JSON logs that are automatically co
 │              └──────────────┬─────────────────┘                      │
 │                             │ /var/log/containers/*.log              │
 │   Namespace: observability  ▼                                        │
-│   ┌──────────────────────────────────────┐                          │
+│   ┌───────────────────────────────────────┐                          │
 │   │         Fluent Bit (DaemonSet)        │                          │
 │   │  • Tail container log files           │                          │
 │   │  • Parse CRI format                   │                          │
 │   │  • Merge JSON log body                │                          │
 │   │  • Enrich: pod_name, namespace,       │                          │
 │   │            container_name, cluster    │                          │
-│   └──────────────────┬───────────────────┘                          │
+│   └──────────────────┬────────────────────┘                          │
 │                      │ enriched JSON documents                       │
 │                      ▼                                               │
-│   ┌───────────────────────────────────────┐                         │
-│   │   Elasticsearch 8.11 (single node)    │                         │
-│   │   Index pattern: logs-YYYY.MM.DD      │                         │
-│   └──────────────────┬────────────────────┘                         │
+│   ┌────────────────────────────────────────┐                         │
+│   │   Elasticsearch 8.11 (single node)     │                         │
+│   │   Index pattern: logs-YYYY.MM.DD       │                         │
+│   └──────────────────┬─────────────────────┘                         │
 │                      │ REST API                                      │
 │                      ▼                                               │
-│   ┌───────────────────────────────────────┐                         │
-│   │         Kibana 8.11                   │                         │
-│   │   NodePort 30561 → localhost:5601     │                         │
-│   └───────────────────────────────────────┘                         │
+│   ┌────────────────────────────────────────┐                         │
+│   │         Kibana 8.11                    │                         │
+│   │   NodePort 30561 → localhost:5601      │                         │
+│   └────────────────────────────────────────┘                         │
 │                                                                      │
 │   Host port mappings (KIND extraPortMappings):                       │
 │     localhost:5601  →  Kibana          (NodePort 30561)              │
@@ -70,7 +70,7 @@ Two Node.js microservices produce structured JSON logs that are automatically co
 ### Component summary
 
 | Component | Role |
-|-----------|------|
+| - | - |
 | **user-service** | Exposes user CRUD endpoints, logs structured JSON to stdout |
 | **payment-service** | Processes payments, simulates 30 % failures and up to 800 ms latency |
 | **Fluent Bit** | DaemonSet that tails pod logs, parses CRI format, enriches with K8s metadata, ships to ES |
@@ -82,10 +82,10 @@ Two Node.js microservices produce structured JSON logs that are automatically co
 ## Prerequisites
 
 | Tool | Minimum version | Install |
-|------|----------------|---------|
-| Docker | 20.10+ | https://docs.docker.com/get-docker/ |
+| - | - | - |
+| Docker | 20.10+ | h`ttps://docs.docker.com/get-docker/` |
 | KIND | 0.20+ | `go install sigs.k8s.io/kind@latest` or brew |
-| kubectl | 1.27+ | https://kubernetes.io/docs/tasks/tools/ |
+| kubectl | 1.27+ | `https://kubernetes.io/docs/tasks/tools/` |
 | curl | any | pre-installed on most systems |
 
 > **Memory:** Elasticsearch requires at least **2 GB** available for the local machine.  
@@ -95,7 +95,7 @@ Two Node.js microservices produce structured JSON logs that are automatically co
 
 ## Project Structure
 
-```
+```text
 k8s-observability-elk-demo/
 ├── kind/
 │   └── kind-config.yaml          # KIND cluster definition (port mappings)
@@ -161,6 +161,7 @@ chmod +x scripts/*.sh
 ```
 
 The script (≈ 5–8 min on first run):
+
 1. Checks `kind`, `kubectl`, `docker`
 2. Creates the KIND cluster with all port mappings
 3. Builds both Docker images
@@ -199,7 +200,7 @@ kubectl get pods -A
 
 ### 4 · Verify all pods are Running
 
-```
+```text
 NAMESPACE       NAME                               READY   STATUS
 apps            payment-service-xxx                1/1     Running
 apps            payment-service-yyy                1/1     Running
@@ -222,7 +223,7 @@ observability   kibana-xxx                         1/1     Running
 
 **Or manually in the Kibana UI:**
 
-1. Open **http://localhost:5601**
+1. Open `http://localhost:5601`
 2. Navigate to **Stack Management → Data Views → Create data view**
 3. Name: `Observability Logs`
 4. Index pattern: `logs-*`
@@ -234,7 +235,7 @@ observability   kibana-xxx                         1/1     Running
 
 ## Logging Flow
 
-```
+```text
 Node.js service
   process.stdout.write(JSON.stringify({ timestamp, level, service, message, ...fields }) + '\n')
       │
@@ -282,7 +283,7 @@ Index: logs-2024.01.15
 ### Log fields reference
 
 | Field | Type | Notes |
-|-------|------|-------|
+| - | - | - |
 | `@timestamp` | date | Set by Fluent Bit from CRI log timestamp |
 | `timestamp` | date | Set by the application |
 | `level` | keyword | `info`, `warn`, `error` |
@@ -304,10 +305,10 @@ Index: logs-2024.01.15
 ## Accessing the Services
 
 | Service | URL | Notes |
-|---------|-----|-------|
-| Kibana | http://localhost:5601 | via NodePort 30561 |
-| user-service | http://localhost:3001 | via NodePort 30001 |
-| payment-service | http://localhost:8001 | via NodePort 30002 |
+| - | - | - |
+| Kibana | `http://localhost:5601` | via NodePort 30561 |
+| user-service | `http://localhost:3001` | via NodePort 30001 |
+| payment-service | `http://localhost:8001` | via NodePort 30002 |
 
 ### Example API calls
 
@@ -350,6 +351,7 @@ curl -H "X-Request-ID: $REQUEST_ID" http://localhost:8001/payments
 ```
 
 Each round sends:
+
 - `GET /users`, `GET /users/1`, `GET /users/2`, `GET /users/999` (404)
 - `GET /payments`, 3× `POST /payments` (30 % will fail with realistic error codes), `GET /payments/:id`
 - `GET /error` on both services every few rounds (forced 500)
@@ -383,7 +385,7 @@ kubectl set env deployment/payment-service -n apps \
 
 ## Querying Logs in Kibana
 
-Open **http://localhost:5601 → Discover** and ensure the **Observability Logs** (`logs-*`) data view is selected.
+Open **[http://localhost:5601] → Discover** and ensure the **Observability Logs** (`logs-*`) data view is selected.
 
 ### Essential KQL queries
 
@@ -536,7 +538,7 @@ kubectl logs -n observability daemonset/fluent-bit -f | grep -E "error|retry|chu
 ## Resource Requirements
 
 | Component | CPU request | CPU limit | Memory request | Memory limit |
-|-----------|-------------|-----------|----------------|--------------|
+| - | - | - | - | - |
 | Elasticsearch | 200m | 1000m | 1 Gi | 1.5 Gi |
 | Kibana | 200m | 500m | 512 Mi | 1 Gi |
 | Fluent Bit | 50m | 200m | 64 Mi | 256 Mi |
