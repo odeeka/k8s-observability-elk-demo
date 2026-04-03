@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana
+  namespace: observability
+  labels:
+    app: kibana
+spec:
+  selector:
+    app: kibana
+  # NodePort maps to the host via KIND extraPortMappings (containerPort 30561 → host 5601)
+  type: NodePort
+  ports:
+    - name: http
+      port: 5601
+      targetPort: 5601
+      nodePort: 30561
